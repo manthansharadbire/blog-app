@@ -20,7 +20,22 @@ status:{
 createdAt:{
     type:Date,
 },
-author
+author:{
+    type:Schema.Types.ObjectId,
+    ref:"User",
+    required:true,
+},
+viewCount:{
+    type:Number,
+    default:0,
+}, 
+likes:{
+    type:[Schema.Types.ObjectId],
+    ref:"User",
+    default:[],
+}
+},{
+    timestamps:true,
 })
 
 const BlogPost = model("BlogPost",blogPostSchema );
