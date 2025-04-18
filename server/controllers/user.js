@@ -1,4 +1,5 @@
 import User from "./../models/User.js";
+import bcrypt from 'bcrypt';
 
 const postSignup = async (req, res) => {
   const { name, email, password, city } = req.body;
@@ -27,10 +28,12 @@ const postSignup = async (req, res) => {
     });
   }
 
+   const encryptedPassword = await bcrypt.hash(password,10)
+
   const newUser = new User({
     name,
     email,
-    password,
+    password:encryptedPassword,
     city,
   });
 
@@ -64,9 +67,25 @@ const postLogin = async (req, res) => {
     });
   }
 
-  const user = await User.findOne({ email, password }).select("-password -__v")
+  const user = await User.findOne({ email })
+   
+  if(!user){
+    return res.status(400).json({
+      message:"Invalid Email or Passsword",
+      data:null,
+      success:false
+    })
+  }
 
- 
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+
+  if(!isPasswordValid){
+    return res.status(400).json({
+      message:"Invalid Email or Password",
+      data:null,
+      success:false
+    })
+  }
 
   if (user) {
     return res.status(200).json({
