@@ -7,11 +7,17 @@ import jwt from 'jsonwebtoken';
 
 import {postSignup, postLogin} from './controllers/user.js'
 
+const middleware = async(req,res,next)=>{
+    console.log(`Request received at ${req.url}`)
+    next();
+}
+
 const app = express();
 
 //middlewares
 app.use(express.json());
 app.use(cors());
+app.use(middleware);
 
 
 const connectDB = async()=> {
@@ -25,6 +31,8 @@ const connectDB = async()=> {
     }
 }
 
+
+
 app.get("/health", (req,res)=>{
     return res.status(200).json({message:"Server is Healthy!"})
 })
@@ -34,7 +42,7 @@ app.post("/login", postLogin)
 app.post("/signup", postSignup)
 
 //to fetch blogs
-app.get("/blogs", (req,res)=>{
+app.get("/blogs",(req,res)=>{
 
  const {authorization} = req.headers;
     try{
@@ -63,6 +71,14 @@ return res.status(200).json({
     success: true
 })
 });
+
+app.get("/test",async (req,res)=>{
+    return res.status(200).json({
+        message:"Hello from test route",
+        data:null,
+        success:true
+    })
+})
 
 
 
