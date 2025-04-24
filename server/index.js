@@ -3,9 +3,13 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
+import jwt from 'jsonwebtoken';
+
 import {postSignup, postLogin} from './controllers/user.js'
 
 const app = express();
+
+//middlewares
 app.use(express.json());
 app.use(cors());
 
@@ -28,6 +32,39 @@ app.get("/health", (req,res)=>{
 app.post("/login", postLogin)
 //signup
 app.post("/signup", postSignup)
+
+//to fetch blogs
+app.get("/blogs", (req,res)=>{
+
+ const {authorization} = req.headers;
+    try{
+    const jwtToken = authorization.split(" ")[1];
+    console.log(`JWT Token = ${jwtToken}`)
+    const decodedToken = jwt.verify(jwtToken, process.env.JWT_SECRET)
+    console.log("Decoded Token",  decodedToken)
+    }catch(e){
+        return res.status(401).json({
+            message:`Unauthorized: ${e.message}`,
+            data:null,
+            success:false
+        });
+    }
+    const blogs = [{
+    title: "Blog1",
+    content : "This is the content of Blog1"
+    },
+{
+    title: "Blog2",
+    content:"This is the content of Blog2"
+}];
+return res.status(200).json({
+    message: "Blogs fetched successfully",
+    data: blogs,
+    success: true
+})
+});
+
+
 
 const PORT = process.env.PORT || 5002;
 
