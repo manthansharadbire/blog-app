@@ -4,21 +4,13 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 import jwt from "jsonwebtoken";
-import {postBlogs} from "./controllers/blog.js"
+import { postBlogs,getBlogs } from "./controllers/blog.js";
 
 import { postSignup, postLogin } from "./controllers/user.js";
 
-const middleware = async (req, res, next) => {
-  console.log(`Request received at ${req.url}`);
-  next();
-};
-
 const app = express();
-
-//middlewares
 app.use(express.json());
 app.use(cors());
-app.use(middleware);
 
 const connectDB = async () => {
   const conn = await mongoose.connect(process.env.MONGO_URI);
@@ -30,22 +22,15 @@ const connectDB = async () => {
   }
 };
 
-app.get("/health", (req, res) => {
-  return res.status(200).json({ message: "Server is Healthy!" });
-});
-//login
-app.post("/login", postLogin);
-//signup
-app.post("/signup", postSignup);
-
-//to fetch blogs
-app.get("/blogs", (req, res) => {
+const verifyJWT = (req, res, next) => {
   const { authorization } = req.headers;
   try {
     const jwtToken = authorization.split(" ")[1];
-    console.log(`JWT Token = ${jwtToken}`);
     const decodedToken = jwt.verify(jwtToken, process.env.JWT_SECRET);
     console.log("Decoded Token", decodedToken);
+
+    req.user_id = decodedToken;
+    next();
   } catch (e) {
     return res.status(401).json({
       message: `Unauthorized: ${e.message}`,
@@ -53,24 +38,24 @@ app.get("/blogs", (req, res) => {
       success: false,
     });
   }
-  const blogs = [
-    {
-      title: "Blog1",
-      content: "This is the content of Blog1",
-    },
-    {
-      title: "Blog2",
-      content: "This is the content of Blog2",
-    },
-  ];
-  return res.status(200).json({
-    message: "Blogs fetched successfully",
-    data: blogs,
-    success: true,
-  });
+};
+
+//health
+app.get("/health", (req, res) => {
+  return res.status(200).json({ message: "Server is Healthy!" });
 });
 
-app.post("/blogs", postBlogs)
+//login
+app.post("/login", postLogin);
+
+//signup
+app.post("/signup", postSignup);
+
+//to fetch blogs
+app.get("/blogs", getBlogs);
+
+//to post a blog
+app.post("/blogs", verifyJWT, postBlogs);
 
 const PORT = process.env.PORT || 5002;
 
